@@ -7,7 +7,7 @@ contract DocumentManagementSystem {
     Resource[] public Resources;
     address public owner;
     uint minimumContribution;
-    uint subscribersCount;
+    uint public subscribersCount=0;
     mapping(address => bool) public subscribers;
 
     constructor(uint value){
@@ -28,11 +28,20 @@ contract DocumentManagementSystem {
         require(address(this).balance>=minimumContribution,"Please pay minimum charge");
         Resource newResource = new Resource(msg.sender,key);
         Resources.push(newResource);
-        payable(owner).transfer(address(this).balance);
+        if(!subscribers[msg.sender]){
+            subscribers[msg.sender]=true;
+            subscribersCount++;
+        }
     }
 
     function getResources() public view returns (Resource[] memory) {
         return Resources;
+    }
+    function getBalance() public view restricted returns(uint) {
+        return address(this).balance;
+    }
+    function withdrawMoney() public restricted{
+        payable(owner).transfer(address(this).balance);
     }
 }
 
