@@ -43,6 +43,20 @@ contract SMPC{
         return c;
     }
 
+    function avilable_bgp_location(User[] memory users,string memory location) public view returns(string[100] memory){
+        string[100] memory bgps;
+        uint ind=0; 
+        for(uint i=0;i<users.length;++i){
+            if(compare(location,users[i].location()))bgps[ind++]=users[i].bloodgroup();
+        }
+        return bgps;
+    }
+    function check_user_eligibility(User[] memory users,uint id) public view returns(bool){        
+        return users[id].date_of_donation()<= 6*2629800000;
+    }
+    function check_blood_expiry(User[] memory users,uint id) public view returns(bool){        
+        return users[id].date_of_donation()<= 42*86400000;        
+    }
 }
 
 contract MedHub {
@@ -54,22 +68,54 @@ contract MedHub {
         _;
     }
 
-    function createUser(uint256 minimum,uint age,address payable userAddress,string memory location,string memory bgp) public returns(uint){
-        User newResource = new User(minimum, userAddress,age,location,bgp);
+    function create_user(uint256 minimum,uint age,address payable user_address,string memory location,string memory blood_group) public returns(uint){
+        User newResource = new User(minimum, user_address,age,location,blood_group);
         Users.push(newResource);
         return newResource.age();
     }
 
-    function updateUser(uint sugar,uint lbp,uint hbp,uint id,bool hiv) public  validIndex(id) returns (User){
+    function update_user(uint sugar,uint lower_bp,uint higher_bp,uint id,bool hiv) public  validIndex(id) returns (User){
         User c=Users[id];
-        c.userUpdate(sugar, lbp, hbp,hiv );
+        c.userUpdate(sugar, lower_bp, higher_bp,hiv );
         return c;
     }
-    function getUsers() public view returns (User[] memory){
+    function update_user_blood_donation_date(uint id) public  validIndex(id) returns (User){
+        User c=Users[id];
+        uint tsp=block.timestamp;
+        c.set_donation_time(tsp);
+        return c;
+    }
+    function get_users() public view returns (User[] memory){
         return Users;
     }
-    function SMPCcallaboveeighteen() public view returns(int) {
+
+    function smpc_call_above_eighteen() public view returns(int) {
         return smpc.getCountUseraboveEighteen(Users);
+    }
+    
+    function smpc_get_count_of_normal_sugar_level_recepient() public view returns(int){
+        return smpc.getNormalSugarLevel(Users);
+    }
+
+    function smpc_check_if_has_HIV(uint id) public view returns(bool){        
+        return Users[id].hiv();
+    }
+
+    function smpc_total_number_of_hiv_patients() public view returns(int){
+        return smpc.totalAmounHivPatients(Users);
+    }
+
+    function smpc_total_hiv_patient_location(string memory location) public view returns(int){
+        return smpc.totalAmounHivPatientsAtLoctaion(Users, location);
+    }
+    function smpc_avilable_bgp_location(string memory location) public view returns(string[100] memory){
+        return smpc.avilable_bgp_location(Users, location);
+    }
+    function smpc_check_user_eligibility(uint id) public view returns(bool){        
+        return smpc.check_user_eligibility(Users, id);
+    }
+    function  smpc_check_blood_expiry(uint id) public view returns(bool){        
+        return smpc.check_blood_expiry(Users, id);        
     }
 }
 
@@ -83,6 +129,7 @@ contract User {
     uint public lbp;
     uint public hbp;  
     bool public hiv=false;
+    uint public date_of_donation;
     mapping ( address => bool) medicalOfficials; 
 
     
@@ -107,5 +154,8 @@ contract User {
         hiv=hivP;
     }
     
+    function set_donation_time(uint tsmp) public restricted{
+        date_of_donation =tsmp;
+    }
 }
 
